@@ -27,9 +27,6 @@ class esrgan_video_upscaler():
         out = cv2.VideoWriter('output.mkv', fourcc, fps,
                               (width * self.model_scale_factor, height * self.model_scale_factor))
 
-        # Set the frame counter to 0
-        frame_count = 0
-
         # Loop through the video frames
         while cap.isOpened():
 
@@ -46,13 +43,6 @@ class esrgan_video_upscaler():
                 # cv2.imshow('Upscaled_frame', upscaled_frame)
                 # cv2.imwrite("1.png", upscaled_frame)
                 out.write(cv2.convertScaleAbs(upscaled_frame, alpha=(1)))
-
-                # Increment the frame counter
-                frame_count += 1
-
-                # If we have shown 5 frames, exit the loop
-                if frame_count == 5:
-                    break
 
             # If the frame was not read successfully, exit the loop
             else:
