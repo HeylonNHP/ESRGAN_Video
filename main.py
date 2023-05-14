@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import cv2
 import os
 import sys
@@ -7,9 +9,12 @@ import esrgan.upscale
 
 
 class esrgan_video_upscaler():
+    model_name = r"esrgan\models\4x-UltraSharp-upscale-jpeg-images.pth"
 
     def upscale_video(self):
-        upscaler = esrgan.upscale.Upscale()
+        upscaler = esrgan.upscale.Upscale(input=Path("input"), output=Path("output"), model=self.model_name,
+                                          alpha_mode=esrgan.upscale.AlphaOptions.SWAPPING)
+        upscaler.load_model(self.model_name)
         # Open the video file
         cap = cv2.VideoCapture(r'N:\video\cat-cats.gif')
 
@@ -25,8 +30,12 @@ class esrgan_video_upscaler():
             # If the frame was read successfully
             if ret:
 
+                upscaled_frame = upscaler.upscale(frame)
+
                 # Show the frame
                 cv2.imshow('Frame', frame)
+                cv2.imshow('Upscaled_frame', upscaled_frame)
+                cv2.imwrite("1.png", upscaled_frame)
 
                 # Increment the frame counter
                 frame_count += 1
