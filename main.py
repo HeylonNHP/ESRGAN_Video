@@ -9,8 +9,12 @@ import esrgan.upscale
 
 
 class esrgan_video_upscaler():
-    model_scale_factor = 4
-    model_name = r"esrgan\models\4x-UltraSharp-upscale-jpeg-images.pth"
+    model_scale_factor = 1
+    model_name = ""
+
+    def __init__(self, model_name, scale_factor):
+        self.model_name = model_name
+        self.model_scale_factor = scale_factor
 
     def upscale_video(self, video_path):
         upscaler = esrgan.upscale.Upscale(input=Path("input"), output=Path("output"), model=self.model_name,
@@ -55,8 +59,10 @@ class esrgan_video_upscaler():
 
 
 def main():
-    video_input_path = sys.argv[1]
-    upscaler = esrgan_video_upscaler()
+    video_input_path = sys.argv[3]
+    model_name = fr"esrgan\models\{sys.argv[1]}"
+    scale_factor = int(sys.argv[2])
+    upscaler = esrgan_video_upscaler(model_name, scale_factor)
     upscaler.upscale_video(video_input_path)
 
 
