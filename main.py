@@ -41,11 +41,6 @@ class esrgan_video_upscaler():
             if ret:
 
                 upscaled_frame = upscaler.upscale(frame)
-
-                # Show the frame
-                # cv2.imshow('Frame', frame)
-                # cv2.imshow('Upscaled_frame', upscaled_frame)
-                # cv2.imwrite("1.png", upscaled_frame)
                 out.write(cv2.convertScaleAbs(upscaled_frame, alpha=(1)))
 
             # If the frame was not read successfully, exit the loop
