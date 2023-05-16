@@ -8,6 +8,7 @@ from cv2 import VideoWriter
 
 sys.path.insert(0, os.getcwd() + os.path.sep + 'esrgan')
 import esrgan.upscale
+import esrgan.utils.dataops as ops
 
 
 class esrgan_video_upscaler():
@@ -40,7 +41,13 @@ class esrgan_video_upscaler():
 
             # If the frame was read successfully
             if ret:
-                upscaled_frame = upscaler.upscale(frame)
+                # Prepare to split frame to save VRAM
+                frame = cv2.copyMakeBorder(frame, 16, 16, 16, 16, cv2.BORDER_WRAP)
+                # Parse the upscaling function upscaler.upscale, and the original frame to the auto splitter
+                upscaled_frame, depth = ops.auto_split_upscale(
+                    frame, upscaler.upscale, upscaler.last_scale
+                )
+                upscaled_frame = upscaler.crop_seamless(upscaled_frame, upscaler.last_scale)
 
                 if out is None:
                     # Initialise output once the output resolution is known
