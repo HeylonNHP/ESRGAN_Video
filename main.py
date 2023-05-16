@@ -33,6 +33,7 @@ class esrgan_video_upscaler():
         fourcc = cv2.VideoWriter_fourcc(*'FFV1')
         out: VideoWriter = None
         calculated_scaling_factor: int
+        depth: int = None
 
         # Loop through the video frames
         while cap.isOpened():
@@ -45,7 +46,7 @@ class esrgan_video_upscaler():
                 frame = cv2.copyMakeBorder(frame, 16, 16, 16, 16, cv2.BORDER_WRAP)
                 # Parse the upscaling function upscaler.upscale, and the original frame to the auto splitter
                 upscaled_frame, depth = ops.auto_split_upscale(
-                    frame, upscaler.upscale, upscaler.last_scale
+                    frame, upscaler.upscale, upscaler.last_scale, max_depth=depth
                 )
                 upscaled_frame = upscaler.crop_seamless(upscaled_frame, upscaler.last_scale)
 
