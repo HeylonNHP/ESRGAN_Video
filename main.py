@@ -1,3 +1,4 @@
+import create_init
 from pathlib import Path
 
 import cv2
@@ -6,6 +7,8 @@ import sys
 
 from cv2 import VideoWriter
 
+init_file_generator = create_init.create_init("esrgan")
+init_file_generator.create_init_files()
 sys.path.insert(0, os.getcwd() + os.path.sep + 'esrgan')
 import esrgan.upscale
 import esrgan.utils.dataops as ops
