@@ -5,6 +5,7 @@ import cv2
 import os
 import sys
 
+from tqdm import tqdm
 from cv2 import VideoWriter
 
 init_file_generator = create_init.create_init("esrgan")
@@ -31,6 +32,8 @@ class esrgan_video_upscaler():
         fps = cap.get(cv2.CAP_PROP_FPS)
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        progressBar = tqdm(total=total_frames)
 
         # Open the output video file
         fourcc = cv2.VideoWriter_fourcc(*'FFV1')
@@ -67,6 +70,7 @@ class esrgan_video_upscaler():
                     upscaled_frame = cv2.resize(upscaled_frame, (0, 0), fx=scale, fy=scale,
                                                 interpolation=cv2.INTER_AREA)
                 out.write(cv2.convertScaleAbs(upscaled_frame, alpha=(1)))
+                progressBar.update(1)
 
             # If the frame was not read successfully, exit the loop
             else:
