@@ -25,7 +25,7 @@ class esrgan_video_upscaler():
 
     def upscale_video(self, video_path):
         upscaler = esrgan.upscale.Upscale(input=Path("input"), output=Path("output"), model=self.model_name,
-                                          alpha_mode=esrgan.upscale.AlphaOptions.SWAPPING)
+                                          alpha_mode=esrgan.upscale.AlphaOptions.SWAPPING, fp16=True)
         upscaler.load_model(self.model_name)
         # Open the video file
         cap = cv2.VideoCapture(video_path)
