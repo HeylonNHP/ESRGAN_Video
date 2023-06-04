@@ -4,6 +4,7 @@ from pathlib import Path
 import cv2
 import os
 import sys
+import ffmpeg
 
 from tqdm import tqdm
 from cv2 import VideoWriter
@@ -29,16 +30,28 @@ class esrgan_video_upscaler():
         upscaler.load_model(self.model_name)
         # Open the video file
         cap = cv2.VideoCapture(video_path)
+
+        # video details
         fps = cap.get(cv2.CAP_PROP_FPS)
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        progressBar = tqdm(total=total_frames)
+
+        # upscaled details
+        upscaled_width = width * upscaler.last_scale
+        upscaled_height = height * upscaler.last_scale
+        rescale_factor = float(self.model_scale_factor / float(upscaler.last_scale))
+        rescaled_width = int(rescale_factor * upscaled_width)
+        rescaled_height = int(rescale_factor * upscaled_height)
+
+        # loading bar
+        progress_bar = tqdm(total=total_frames)
 
         # Open the output video file
         fourcc = cv2.VideoWriter_fourcc(*'FFV1')
-        out: VideoWriter = None
-        calculated_scaling_factor: int
+        out: VideoWriter = cv2.VideoWriter('output.mkv', fourcc, fps,
+                                           (rescaled_width,
+                                            rescaled_height))
         depth: int = None
 
         # Loop through the video frames
@@ -56,21 +69,11 @@ class esrgan_video_upscaler():
                 )
                 upscaled_frame = upscaler.crop_seamless(upscaled_frame, upscaler.last_scale)
 
-                if out is None:
-                    # Initialise output once the output resolution is known
-                    upscaled_frame_height, upscaled_frame_width = upscaled_frame.shape[:2]
-                    calculated_scaling_factor = ((upscaled_frame_height / height) + (
-                            upscaled_frame_width / width)) / 2.0
-                    out = cv2.VideoWriter('output.mkv', fourcc, fps,
-                                          (int(width * self.model_scale_factor),
-                                           int(height * self.model_scale_factor)))
-
-                if self.model_scale_factor < calculated_scaling_factor:
-                    scale = float(self.model_scale_factor) / float(calculated_scaling_factor)
-                    upscaled_frame = cv2.resize(upscaled_frame, (0, 0), fx=scale, fy=scale,
+                if rescale_factor != 1:
+                    upscaled_frame = cv2.resize(upscaled_frame, (0, 0), fx=rescale_factor, fy=rescale_factor,
                                                 interpolation=cv2.INTER_AREA)
-                out.write(cv2.convertScaleAbs(upscaled_frame, alpha=(1)))
-                progressBar.update(1)
+                out.write(cv2.convertScaleAbs(upscaled_frame, alpha=1))
+                progress_bar.update(1)
 
             # If the frame was not read successfully, exit the loop
             else:
