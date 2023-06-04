@@ -1,6 +1,7 @@
 import create_init
 from pathlib import Path
 
+import numpy as np
 import cv2
 import os
 import sys
@@ -54,6 +55,29 @@ class esrgan_video_upscaler():
                                             rescaled_height))
         depth: int = None
 
+        # Set up the FFmpeg command with the desired output format and codec
+        output_file = "output.mp4"
+        input_args = {
+            "format": "rawvideo",
+            "s": f"{rescaled_width}x{rescaled_height}",
+            "pixel_format": "rgb24",
+            "r": str(fps),
+        }
+        output_args = {
+            "vcodec": "libx264",
+            "pix_fmt": "yuv420p",
+            "preset": "ultrafast",
+            "format": "mp4",
+        }
+
+        process = (
+            ffmpeg
+            .input("pipe:", **input_args)
+            .output(output_file, **output_args)
+            .overwrite_output()
+            .run_async(pipe_stdin=True)
+        )
+
         # Loop through the video frames
         while cap.isOpened():
             # Read a frame
@@ -72,7 +96,14 @@ class esrgan_video_upscaler():
                 if rescale_factor != 1:
                     upscaled_frame = cv2.resize(upscaled_frame, (0, 0), fx=rescale_factor, fy=rescale_factor,
                                                 interpolation=cv2.INTER_AREA)
-                out.write(cv2.convertScaleAbs(upscaled_frame, alpha=1))
+                output_image = cv2.convertScaleAbs(upscaled_frame, alpha=1)
+                out.write(output_image)
+
+                # Convert to rgb24 and pipe to ffmpeg
+                rgb24_output_image = cv2.cvtColor(output_image, cv2.COLOR_BGR2RGB)
+                byte_array = np.asarray(rgb24_output_image)
+                process.stdin.write(byte_array)
+
                 progress_bar.update(1)
 
             # If the frame was not read successfully, exit the loop
@@ -83,6 +114,8 @@ class esrgan_video_upscaler():
         cap.release()
         out.release()
         cv2.destroyAllWindows()
+        process.stdin.close()
+        process.wait()
 
 
 def main():
