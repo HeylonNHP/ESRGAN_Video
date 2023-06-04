@@ -77,14 +77,6 @@ class esrgan_video_upscaler():
                                                                     **output_args).overwrite_output().run_async(
             pipe_stdin=True))
 
-        # process = (
-        #     ffmpeg
-        #     .input("pipe:", **input_args)
-        #     .output(output_file, **output_args)
-        #     .overwrite_output()
-        #     .run_async(pipe_stdin=True)
-        # )
-
         # Loop through the video frames
         while cap.isOpened():
             # Read a frame
