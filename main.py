@@ -48,11 +48,6 @@ class esrgan_video_upscaler():
         # loading bar
         progress_bar = tqdm(total=total_frames)
 
-        # Open the output video file
-        fourcc = cv2.VideoWriter_fourcc(*'FFV1')
-        out: VideoWriter = cv2.VideoWriter('output.mkv', fourcc, fps,
-                                           (rescaled_width,
-                                            rescaled_height))
         depth: int = None
 
         # Set up the FFmpeg command with the desired output format and codec
@@ -67,8 +62,9 @@ class esrgan_video_upscaler():
         output_args = {
             "vcodec": "libx264",
             "pix_fmt": "yuv420p",
-            "preset": "ultrafast",
+            "preset": "veryslow",
             "format": "mp4",
+            "crf": "20",
         }
 
         orig_input_video = ffmpeg.input(video_path)
@@ -96,7 +92,6 @@ class esrgan_video_upscaler():
                     upscaled_frame = cv2.resize(upscaled_frame, (0, 0), fx=rescale_factor, fy=rescale_factor,
                                                 interpolation=cv2.INTER_AREA)
                 output_image = cv2.convertScaleAbs(upscaled_frame, alpha=1)
-                out.write(output_image)
 
                 # Convert to rgb24 and pipe to ffmpeg
                 rgb24_output_image = cv2.cvtColor(output_image, cv2.COLOR_BGR2RGB)
@@ -111,7 +106,6 @@ class esrgan_video_upscaler():
 
         # Release the video file and destroy the window
         cap.release()
-        out.release()
         cv2.destroyAllWindows()
         process.stdin.close()
         process.wait()
