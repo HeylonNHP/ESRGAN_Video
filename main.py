@@ -25,6 +25,17 @@ class esrgan_video_upscaler():
         self.model_name = model_name
         self.model_scale_factor = scale_factor
 
+    def has_audio_track(self, video_path):
+        try:
+            video_info = ffmpeg.probe(video_path)
+            for stream in video_info['streams']:
+                if stream['codec_type'] == 'audio':
+                    return True
+            return False
+        except ffmpeg.Error as e:
+            print(f"Error: {e.stderr}")
+            return False
+
     def upscale_video(self, video_path):
         upscaler = esrgan.upscale.Upscale(input=Path("input"), output=Path("output"), model=self.model_name,
                                           alpha_mode=esrgan.upscale.AlphaOptions.SWAPPING, fp16=True)
@@ -52,7 +63,7 @@ class esrgan_video_upscaler():
 
         # Set up the FFmpeg command with the desired output format and codec
 
-        output_file = "output.mp4"
+        output_file = "output.mkv"
         input_args = {
             "format": "rawvideo",
             "s": f"{rescaled_width}x{rescaled_height}",
@@ -61,17 +72,23 @@ class esrgan_video_upscaler():
         }
         output_args = {
             "vcodec": "libx264",
-            "pix_fmt": "yuv420p",
+            "pix_fmt": "yuv444p",
             "preset": "veryslow",
-            "format": "mp4",
-            "crf": "20",
+            "format": "matroska",
+            "crf": "0",
         }
 
-        orig_input_video = ffmpeg.input(video_path)
-        process = (ffmpeg.input("pipe:", **input_args)
-                   .concat(orig_input_video.audio, v=1, a=1).output(output_file,
-                                                                    **output_args).overwrite_output().run_async(
-            pipe_stdin=True))
+        if self.has_audio_track(video_path):
+            orig_input_video = ffmpeg.input(video_path)
+            output_args['acodec'] = 'flac'
+            process = (ffmpeg.input("pipe:", **input_args)
+            .concat(orig_input_video.audio, v=1, a=1).output(output_file,
+                                                             **output_args).overwrite_output().run_async(
+                pipe_stdin=True))
+        else:
+            process = (
+                ffmpeg.input("pipe:", **input_args).output(output_file, **output_args).overwrite_output().run_async(
+                    pipe_stdin=True))
 
         # Loop through the video frames
         while cap.isOpened():
