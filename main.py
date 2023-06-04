@@ -56,6 +56,7 @@ class esrgan_video_upscaler():
         depth: int = None
 
         # Set up the FFmpeg command with the desired output format and codec
+
         output_file = "output.mp4"
         input_args = {
             "format": "rawvideo",
@@ -70,13 +71,19 @@ class esrgan_video_upscaler():
             "format": "mp4",
         }
 
-        process = (
-            ffmpeg
-            .input("pipe:", **input_args)
-            .output(output_file, **output_args)
-            .overwrite_output()
-            .run_async(pipe_stdin=True)
-        )
+        orig_input_video = ffmpeg.input(video_path)
+        process = (ffmpeg.input("pipe:", **input_args)
+                   .concat(orig_input_video.audio, v=1, a=1).output(output_file,
+                                                                    **output_args).overwrite_output().run_async(
+            pipe_stdin=True))
+
+        # process = (
+        #     ffmpeg
+        #     .input("pipe:", **input_args)
+        #     .output(output_file, **output_args)
+        #     .overwrite_output()
+        #     .run_async(pipe_stdin=True)
+        # )
 
         # Loop through the video frames
         while cap.isOpened():
