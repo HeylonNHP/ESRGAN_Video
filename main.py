@@ -36,7 +36,7 @@ class esrgan_video_upscaler():
             print(f"Error: {e.stderr}")
             return False
 
-    def upscale_video(self, video_path):
+    def upscale_video(self, video_path: str, output_path: str = None):
         upscaler = esrgan.upscale.Upscale(input=Path("input"), output=Path("output"), model=self.model_name,
                                           alpha_mode=esrgan.upscale.AlphaOptions.SWAPPING, fp16=True)
         upscaler.load_model(self.model_name)
@@ -63,7 +63,9 @@ class esrgan_video_upscaler():
 
         # Set up the FFmpeg command with the desired output format and codec
 
-        output_file = "output.mkv"
+        if output_path is None:
+            output_path = "output.mkv"
+
         input_args = {
             "format": "rawvideo",
             "s": f"{rescaled_width}x{rescaled_height}",
@@ -82,12 +84,12 @@ class esrgan_video_upscaler():
             orig_input_video = ffmpeg.input(video_path)
             output_args['acodec'] = 'flac'
             process = (ffmpeg.input("pipe:", **input_args)
-            .concat(orig_input_video.audio, v=1, a=1).output(output_file,
+            .concat(orig_input_video.audio, v=1, a=1).output(output_path,
                                                              **output_args).overwrite_output().run_async(
                 pipe_stdin=True))
         else:
             process = (
-                ffmpeg.input("pipe:", **input_args).output(output_file, **output_args).overwrite_output().run_async(
+                ffmpeg.input("pipe:", **input_args).output(output_path, **output_args).overwrite_output().run_async(
                     pipe_stdin=True))
 
         # Loop through the video frames
